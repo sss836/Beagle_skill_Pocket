@@ -91,6 +91,20 @@ class TaskTests(unittest.TestCase):
         self.assertEqual(self.manager.get(job['id'])['status'], 'failed')
         self.assertEqual(self.manager.get(job['id'])['error'], 'quota exhausted')
 
+    def test_persistent_chat_uses_workspace_root_and_has_an_open_link(self):
+        job, rpc = self.running()
+        start = next(p for m,p in rpc.calls if m == 'thread/start')
+        turn = next(p for m,p in rpc.calls if m == 'turn/start')
+        self.assertEqual(start['cwd'], str(self.workspace))
+        self.assertEqual(turn['cwd'], str(self.workspace))
+        self.assertFalse(start['ephemeral'])
+        self.assertNotEqual(start['cwd'], job['output_dir'])
+        self.assertEqual(next(p for m,p in rpc.calls if m == 'thread/name/set'),
+                         {'threadId':'thread-test','name':'比格 · 创建一份测试成果'})
+        public = self.manager.get(job['id'])
+        self.assertEqual(public['thread_url'], 'codex://threads/thread-test')
+        self.assertEqual(public['thread_title'], '比格 · 创建一份测试成果')
+
     def test_model_is_forwarded_only_when_selected(self):
         job = self.manager.submit('模型测试', model='sample-model')
         self.wait(lambda: self.manager.get(job['id'])['status']=='running')

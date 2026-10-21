@@ -11,11 +11,16 @@ import threading
 import time
 import uuid
 from pathlib import Path
+from urllib.parse import quote
 
 TERMINAL = {'completed', 'failed', 'cancelled', 'interrupted'}
 STATUS = {'queued': '排队中', 'starting': '正在接单', 'running': '正在干活',
           'waiting': '等你确认', 'completed': '已完成', 'failed': '执行失败',
           'cancelled': '已取消', 'interrupted': '运行已中断'}
+
+
+def conversation_title(task):
+    return '比格 · ' + ' '.join(task.split())[:48]
 
 
 def codex_executable():
@@ -142,7 +147,7 @@ class TaskManager:
                 return copy.deepcopy(self.model_cache[1])
             client = self.rpc_factory(lambda *_: None, lambda *_: None, str(self.workspaces[0] if self.workspaces else Path.home()))
             try:
-                client.call('initialize', {'clientInfo': {'name': 'beagle_skill_station', 'version': '0.3.1'}})
+                client.call('initialize', {'clientInfo': {'name': 'beagle_skill_station', 'version': '0.3.3'}})
                 client.send({'method': 'initialized', 'params': {}})
                 response = client.call('model/list', {'includeHidden': False, 'limit': 100}, timeout=20)
                 rows = response.get('data', [])
@@ -175,6 +180,9 @@ class TaskManager:
                 raise ValueError('没有找到这项任务')
             job = copy.deepcopy(self.jobs[job_id])
             job['status_label'] = STATUS[job['status']]
+            job['thread_title'] = job.get('thread_title') or conversation_title(job['task'])
+            thread_id = job.get('thread_id')
+            job['thread_url'] = 'codex://threads/'+quote(thread_id, safe='') if thread_id else ''
             return job
 
     def list(self):
@@ -212,7 +220,8 @@ class TaskManager:
                'skill': skill, 'skill_title': skill['title'] if skill else '自动选择技能',
                'status': 'queued', 'created_at': now, 'updated_at': now, 'events': [],
                'pending': [], 'messages': {}, 'result': '', 'error': '', 'artifacts': [],
-               'thread_id': '', 'turn_id': '', 'output_dir': str(selected/'outputs/beagle-tasks'/job_id)}
+               'thread_id': '', 'thread_title': conversation_title(task), 'turn_id': '',
+               'output_dir': str(selected/'outputs/beagle-tasks'/job_id)}
         job['model'] = selected_model['model'] if selected_model else None
         job['model_label'] = selected_model['displayName'] if selected_model else '沿用当前 Codex 设置'
         job['effort'] = selected_model['defaultReasoningEffort'] if selected_model else None
@@ -387,12 +396,14 @@ class TaskManager:
                     if job['status'] == 'cancelled':
                         continue
                 client.call('initialize', {'clientInfo': {'name': 'beagle_skill_station',
-                    'title': 'Beagle Skill Station', 'version': '0.3.1'}})
+                    'title': 'Beagle Skill Station', 'version': '0.3.3'}})
                 client.send({'method': 'initialized', 'params': {}})
                 account = client.call('account/read', {'refreshToken': False}, timeout=15)
                 if not account.get('account'):
                     raise RuntimeError('请先在 Codex 登录你的账号，再回来提交任务。')
-                thread_params = {'cwd': job['workspace'], 'sandbox': 'workspace-write',
+                # Persist a normal chat in the selected project root. Output files
+                # have a separate folder and must never become the chat's cwd.
+                thread_params = {'cwd': job['workspace'], 'ephemeral': False, 'sandbox': 'workspace-write',
                     'approvalPolicy': 'on-request', 'serviceName': 'beagle_skill_station',
                     'developerInstructions': '你正在执行用户从比格技能口袋提交的任务。直接使用可用技能和工具完成工作；不要通过 beagle_tasks MCP 再次提交本任务。只根据真实事件报告进度，最终说明成果路径和实际检查。默认将新增成果保存到用户给定的本次输出文件夹，用户指定其他位置时遵从用户。'}
                 if job.get('model'):
@@ -402,6 +413,14 @@ class TaskManager:
                     job['thread_id'] = started['thread']['id']
                     job['actual_model'] = started.get('model', job.get('model'))
                     self._save(job)
+                try:
+                    client.call('thread/name/set', {'threadId': job['thread_id'],
+                        'name': job['thread_title']}, timeout=10)
+                except RuntimeError:
+                    # Naming support varies by Codex version; execution can continue.
+                    with self.lock:
+                        self._event(job, '对话已建立，将使用 Codex 默认标题')
+                        self._save(job)
                 skill = job['skill']
                 prompt = (f'使用 ${skill["invocation"]}，' if skill else '')+job['task']
                 prompt += '\n\n本次输出文件夹：'+job['output_dir']
@@ -410,7 +429,7 @@ class TaskManager:
                 inputs = [{'type': 'text', 'text': prompt}]
                 if skill:
                     inputs.append({'type': 'skill', 'name': skill['name'], 'path': skill['path']})
-                turn_params = {'threadId': job['thread_id'], 'input': inputs}
+                turn_params = {'threadId': job['thread_id'], 'cwd': job['workspace'], 'input': inputs}
                 if job.get('effort'):
                     turn_params['effort'] = job['effort']
                 turn = client.call('turn/start', turn_params)

@@ -65,6 +65,7 @@ const TaskUI={
     const box=$('jobDetail');box.replaceChildren();
     const active=!['completed','failed','cancelled','interrupted'].includes(job.status);
     const top=el('div','job-top');top.append(el('span','job-state '+job.status,job.status_label));
+    if(job.thread_url){const chat=el('a','job-open-chat','打开 Codex 对话 ↗');chat.href=job.thread_url;chat.title='对话工作目录：'+job.workspace;top.append(chat);}
     if(active)top.append(button('停止任务','job-stop',async()=>{try{await this.request('/api/job/cancel',{id:job.id});this.refresh();}catch(e){this.error(e);}}));
     box.append(top,el('h3','',job.task.length>65?job.task.slice(0,65)+'…':job.task),el('p','',job.skill_title+' · '+job.workspace));
     box.append(el('p','','执行模型：'+(job.actual_model||job.model_label||'沿用当前 Codex 设置')));

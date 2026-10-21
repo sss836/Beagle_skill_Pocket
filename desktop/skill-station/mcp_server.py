@@ -82,7 +82,7 @@ def handle(request):
         supported = ('2024-11-05', '2025-03-26', '2025-06-18')
         version = params.get('protocolVersion')
         answer['result'] = {'protocolVersion': version if version in supported else supported[-1],
-            'capabilities': {'tools': {}}, 'serverInfo': {'name': 'beagle-desktop', 'version': '0.3.1'}}
+            'capabilities': {'tools': {}}, 'serverInfo': {'name': 'beagle-desktop', 'version': '0.3.3'}}
     elif method == 'ping':
         answer['result'] = {}
     elif method == 'tools/list':

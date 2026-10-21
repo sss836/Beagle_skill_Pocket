@@ -40,6 +40,7 @@ class TaskWindow(Gtk.Window):
         self.form.pack_start(label('使用：'+(skill['title'] if skill else '自动选择技能'), 'row-title'), False, False, 0)
         self.workspace = Gtk.ComboBoxText()
         self.workspace.set_hexpand(True)
+        self.form.pack_start(label('新对话所在的项目 / 工作文件夹', 'row-title'), False, False, 0)
         row = Gtk.Box(spacing=7)
         row.pack_start(self.workspace, True, True, 0)
         folder = Gtk.Button(label='选文件夹')
@@ -90,6 +91,9 @@ class TaskWindow(Gtk.Window):
         self.cancel_button.set_sensitive(bool(job_id))
         controls.pack_start(self.cancel_button, False, False, 0)
         root.pack_start(controls, False, False, 0)
+        self.chat_button = Gtk.LinkButton.new_with_label('codex://threads/new', '打开 Codex 对话 ↗')
+        self.chat_button.set_no_show_all(True)
+        root.pack_start(self.chat_button, False, False, 0)
         self.show_all()
         if job_id:
             self.form.hide()
@@ -210,6 +214,12 @@ class TaskWindow(Gtk.Window):
                 GLib.source_remove(self.poll_timer)
                 self.poll_timer = None
         self.cancel_button.set_sensitive(active)
+        if job.get('thread_url'):
+            self.chat_button.set_uri(job['thread_url'])
+            self.chat_button.set_tooltip_text('对话工作目录：'+job['workspace'])
+            self.chat_button.show()
+        else:
+            self.chat_button.hide()
         self.open_button.set_label('处理请求，继续开工 ↗' if job['pending'] else '完整进度与成果文件 ↗')
         parts = [job['task'], '执行模型：'+(job.get('actual_model') or job.get('model_label') or '沿用当前 Codex 设置'), '\n'.join(e['message'] for e in job['events'][-5:])]
         if job['pending']:

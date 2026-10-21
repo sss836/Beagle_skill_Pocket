@@ -4,9 +4,9 @@
 
 **你说要干嘛，比格找技能、组队开工、交回成果。**
 
-一只趴在桌面的比格。鼠标移过去，打开技能口袋；选择技能、填写任务和附件，就能让本机 Codex 执行，并查看真实进度与结果。支持选择账号实际可用的执行模型。
+一只趴在桌面的比格。鼠标移过去，打开技能口袋；选择技能、填写任务和附件，就能让本机 Codex 执行，并查看真实进度与结果。支持选择账号实际可用的执行模型。每项任务会在所选工作文件夹建立持久对话，可从“打开 Codex 对话”进入对应项目下的聊天。
 
-**[⬇ 下载 Linux 安装入口](https://github.com/sss836/Beagle_skill_Pocket/releases/latest/download/beagle-one-click-0.3.2.zip)** · **[全部安装包](https://github.com/sss836/Beagle_skill_Pocket/releases/latest)** · **[详细安装说明](docs/INSTALL.md)**
+**[⬇ 下载 Linux 安装入口](https://github.com/sss836/Beagle_skill_Pocket/releases/latest/download/beagle-one-click-0.3.3.zip)** · **[全部安装包](https://github.com/sss836/Beagle_skill_Pocket/releases/latest)** · **[详细安装说明](docs/INSTALL.md)**
 
 ## 快速安装
 
@@ -21,7 +21,7 @@
 若系统不允许运行下载的桌面入口，打开终端执行下面这一条命令即可安装：
 
 ```bash
-curl -fL https://raw.githubusercontent.com/sss836/Beagle_skill_Pocket/v0.3.2/install.sh -o /tmp/beagle-install.sh && bash /tmp/beagle-install.sh
+curl -fL https://raw.githubusercontent.com/sss836/Beagle_skill_Pocket/v0.3.3/install.sh -o /tmp/beagle-install.sh && bash /tmp/beagle-install.sh
 ```
 
 缺少图形依赖时，安装程序会显示所需命令；Ubuntu / Debian 可先运行：
@@ -37,7 +37,7 @@ sudo apt install python3-gi python3-cairo python3-gi-cairo gir1.2-gtk-3.0
 已安装 Codex CLI 的用户可以直接运行：
 
 ```bash
-codex plugin marketplace add sss836/Beagle_skill_Pocket --ref v0.3.2
+codex plugin marketplace add sss836/Beagle_skill_Pocket --ref v0.3.3
 codex plugin add beagle-skills@beagle-local
 codex plugin add beagle-desktop@beagle-local
 ```
