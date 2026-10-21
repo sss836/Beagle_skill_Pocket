@@ -1,0 +1,32 @@
+{
+  "name": "beagle-local",
+  "interface": {
+    "displayName": "比格的技能口袋"
+  },
+  "plugins": [
+    {
+      "name": "beagle-skills",
+      "source": {
+        "source": "local",
+        "path": "./plugins/beagle-skills"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "beagle-desktop",
+      "source": {
+        "source": "local",
+        "path": "./plugins/beagle-desktop"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.settings/
+settings.json
+pet-state.json
+tasks/
+INSTALLATION.json
+*.log
+.DS_Store
+dist/

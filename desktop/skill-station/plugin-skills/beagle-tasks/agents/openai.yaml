@@ -1,0 +1,4 @@
+interface:
+  display_name: "比格直接开工"
+  short_description: "让比格提交明确任务、展示真实执行状态，并返回结果和成果文件"
+  default_prompt: "使用 $beagle-tasks，把我明确交代的任务提交给比格，并查看真实进度。"

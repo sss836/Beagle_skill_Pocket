@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=安装比格技能口袋
+Name[en]=Install Beagle Skill Pocket
+Comment=下载并安装比格桌宠与 Codex 插件
+Exec=/usr/bin/python3 -c "import pathlib,subprocess,tempfile,urllib.request; d=tempfile.TemporaryDirectory(prefix='beagle-'); p=pathlib.Path(d.name)/'install.sh'; urllib.request.urlretrieve('https://raw.githubusercontent.com/sss836/Beagle_skill_Pocket/v0.3.2/install.sh',p); r=subprocess.run(['bash',str(p)]); input('安装程序已结束，按回车关闭窗口…'); raise SystemExit(r.returncode)"
+Icon=applications-other
+Terminal=true
+Categories=Utility;

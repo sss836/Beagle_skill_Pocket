@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#fff8e9"><title>比格技能小站 · 少干点，交给技能</title>
+  <link rel="icon" type="image/png" href="/media/beagle-work.png"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/tasks.css"><script src="/app.js" defer></script><script src="/tasks.js" defer></script>
+</head>
+<body>
+<aside class="sidebar">
+  <a class="brand" href="/" aria-label="比格技能小站首页"><img src="/media/beagle-work.png" alt="困困比格"><span>比格技能小站<small>少干点，交给技能。</small></span></a>
+  <p class="nav-caption">我的打工装备</p>
+  <nav aria-label="主导航">
+    <button class="nav-item selected" data-view="local"><span>▦</span>我的技能<b id="navCount">—</b></button>
+    <button class="nav-item" data-view="discover"><span>✧</span>发现新技能</button>
+    <button class="nav-item" data-view="favorites"><span>♡</span>我的收藏<b id="favCount">0</b></button>
+    <button class="nav-item" data-view="tasks"><span>⚡</span>任务进度<b id="taskCount">0</b></button>
+  </nav>
+  <p class="nav-caption category-caption">活儿分堆，别来回翻</p><nav id="categories" aria-label="技能分类"></nav>
+  <div class="sidebar-memo"><span>比格提醒</span><p>我可以困，<br>技能不能菜。</p><small>挑个能干的，早点收工。</small></div>
+  <div class="sidebar-foot"><span class="status-dot"></span>本机营业中（勉强）<button id="refresh" title="重新读取本机技能" aria-label="刷新技能列表">↻</button></div>
+</aside>
+<main>
+  <header class="topbar"><span>比格的打工现场 <span class="slash">/</span> <strong id="breadcrumb">我的技能</strong></span><button class="quiet" id="help">使用说明：不会就看 ↗</button></header>
+  <section class="hero">
+    <div class="hero-copy"><span class="eyebrow" id="heroMood">今日状态：人没醒，技能已就位</span><h1 id="heroTitle">这活，非得我来？<strong>让技能先上。</strong></h1><p id="heroDescription">论文、图表、PPT……活你来点，技能去干。</p><button class="primary hero-run" id="newTask">直接开工 ⚡</button></div>
+    <button class="hero-art" id="petBanter" type="button" aria-label="戳一下比格"><span class="speech" id="heroSpeech">还不下班吗？</span><img id="heroImage" src="/media/beagle-work.png" alt="趴在键盘前半眯着眼的比格"><span class="pet-label" id="petLabel">本店店长 · 精神离线</span></button>
+    <span class="hero-doodle doodle-one" aria-hidden="true">✳</span><span class="hero-doodle doodle-two" aria-hidden="true">!!</span>
+  </section>
+  <section class="search-area" aria-label="需求搜索">
+    <form id="searchForm"><label class="search-box"><span class="search-symbol" aria-hidden="true">⌕</span><input id="query" type="search" maxlength="240" placeholder="把活儿说清楚：论文汇报 / 画图 / 多 Agent 分工" aria-label="描述需求或搜索技能"><button class="primary" id="searchButton" type="submit">匹配技能 <span>→</span></button></label></form>
+    <div class="examples"><span>懒得打字？点这个 →</span><button data-query="论文汇报 PPT">论文汇报</button><button data-query="科研绘图">科研绘图</button><button data-query="多 agent 协作">多 Agent 协作</button><button data-query="React 性能排查">React 性能排查</button></div>
+  </section>
+  <section class="team-banner" id="teamBanner"><span class="team-stamp">组队！</span><div><strong>一个比格会困，一队 Agent 开工。</strong><p>调查、实施、独立检查。分工写清楚，谁也别糊弄。</p></div><button id="teamPrompt">生成组队指令 <span>↗</span></button></section>
+  <div class="section-heading" id="catalogHeading"><div><span class="section-kicker" id="sectionKicker">挑一个，少熬一点。</span><h2 id="sectionTitle">我的技能 <span id="resultCount">—</span></h2><p id="sectionSubtitle">本机库存已点清。新增技能后，刷新就能看见。</p></div><div class="toolbar"><label id="popularLabel" hidden><input type="checkbox" id="popular">安装量 1,000+</label><button class="quiet" id="hubPrompt">选择困难？让 Codex 来 ↗</button></div></div>
+  <div id="networkNote" class="network-note" hidden><span>比格先说一句：</span>搜索只发送你填的检索词。社区候选先看来源和适用性，安装量高也得核查。</div>
+  <div id="notice" role="status" class="notice" hidden></div>
+  <section id="grid" class="skill-grid" aria-label="技能列表" aria-live="polite"><div class="empty">比格正在清点库存，马上就好……</div></section>
+  <section id="taskPanel" aria-label="比格任务看板" hidden>
+    <div class="task-heading"><div><h2>比格接单处</h2><p id="runnerState">正在连接本机 Codex…</p></div><button class="primary" id="anotherTask">新任务 ＋</button></div>
+    <form id="jobForm" class="job-form" hidden>
+      <strong id="jobSkillLabel">自动选择技能</strong>
+      <label class="field-label" for="jobWorkspace">工作文件夹</label><select id="jobWorkspace" required></select>
+      <label class="field-label" for="jobModel">执行模型（任务主 Agent）</label><select id="jobModel"><option value="">沿用当前 Codex 设置</option></select><p class="model-hint" id="modelHint">正在读取实际可用模型。子 Agent 的单独选型取决于执行环境。</p>
+      <details class="add-workspace"><summary>添加其他工作文件夹</summary><div><input id="workspacePath" placeholder="粘贴本机文件夹的完整路径" aria-label="工作文件夹路径"><button type="button" id="addWorkspace">添加文件夹</button></div></details>
+      <label class="field-label" for="jobTask">这次要干什么？</label><textarea id="jobTask" rows="4" maxlength="20000" required placeholder="写清楚目标、文件和交付要求。比格会直接提交给 Codex 执行。"></textarea>
+      <details><summary>附上本机文件路径（可选）</summary><textarea id="jobFiles" rows="2" placeholder="每行一个文件的完整路径，例如 /home/me/论文.pdf" aria-label="附件文件路径"></textarea></details>
+      <div class="job-actions"><span>使用本机 Codex 登录；新增成果默认放进本次任务文件夹。</span><button class="primary" id="submitJob" type="submit">让比格开工 ⚡</button></div>
+    </form>
+    <p id="jobError" class="notice" role="status" hidden></p>
+    <div class="task-columns"><nav id="jobList" aria-label="任务记录"></nav><article id="jobDetail" class="job-detail" aria-live="polite"><img class="empty-pet" src="/media/beagle-work.png" alt="等任务的困困比格"><h3>比格还没接到活。</h3><p>点“新任务”，把目标交代清楚就能开工。</p></article></div>
+  </section>
+  <footer><span class="footer-label">使用方法，真不复杂</span><p>选技能 <b>→</b> 填任务直接开工 <b>→</b> 看进度、取成果。也可以复制指令自行使用。</p><span id="originNote">插件缓存中的技能，调用前需在对应会话确认连接。</span><span class="footer-joke">比格负责摆烂，技能负责上班。 © 比格技能小站</span></footer>
+</main>
+<dialog id="detail"><div class="dialog-top"><span id="detailIcon" class="card-icon"></span><span class="dialog-stamp">比格接单处</span><button id="closeDialog" class="close" aria-label="关闭">×</button></div><h2 id="detailTitle"></h2><p id="detailSummary"></p><code id="detailName"></code><div id="detailMeta" class="detail-meta"></div><label class="field-label" for="task">说吧，这次是什么活儿？</label><textarea id="task" rows="3" placeholder="写清楚任务，例如：把附上的论文做成中文组会汇报"></textarea><button id="detailRun" class="primary wide">用这个技能直接开工 ⚡</button><button id="detailCopy" class="quiet wide">复制完整调用指令</button><p class="dialog-tip">直接开工会连接本机 Codex，进度和结果在任务看板查看。</p><details><summary>认真模式：查看技能原始说明</summary><pre id="detailContent"></pre><p id="detailPath" class="path"></p></details></dialog>
+<dialog id="helpDialog"><button class="close" id="closeHelp" aria-label="关闭">×</button><img class="help-pet" src="/media/beagle-service.png" alt="端着蛋糕和果汁的比格"><span class="help-stamp">技能已上桌，您慢用。</span><h2>三步开工，别为难比格。</h2><ol><li><strong>先说你想干什么</strong><p>输入需求匹配本地技能。“发现新技能”可以去社区找外援。</p></li><li><strong>挑个能干的小帮手</strong><p>打开技能卡片、填任务，点击“直接开工”。也可复制调用指令自行使用。</p></li><li><strong>看进度，取成果</strong><p>任务由本机 Codex 执行，在“任务进度”查看状态、处理确认、下载成果。社区新技能先核查来源和适用范围。</p></li></ol><p class="help-foot">这里展示本机发现的技能。实际调用以 Codex 当前会话提供的技能、工具与连接为准。</p></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body></html>

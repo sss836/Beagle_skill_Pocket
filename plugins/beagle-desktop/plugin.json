@@ -1,0 +1,18 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "beagle-desktop",
+  "version": "0.3.2",
+  "description": "提交任务、查看进度、接收成果",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "比格直接开工",
+        "shortDescription": "提交任务、查看进度、接收成果",
+        "brandColor": "#d9a568",
+        "composerIcon": "./assets/beagle.png",
+        "logo": "./assets/beagle.png"
+      },
+      "requires_local_executor": true
+    }
+  }
+}

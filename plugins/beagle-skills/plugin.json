@@ -1,0 +1,17 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "beagle-skills",
+  "version": "0.3.2",
+  "description": "技能导航与多 Agent 分工",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "比格技能口袋",
+        "shortDescription": "技能导航与多 Agent 分工",
+        "brandColor": "#d9a568",
+        "composerIcon": "./assets/beagle.png",
+        "logo": "./assets/beagle.png"
+      }
+    }
+  }
+}

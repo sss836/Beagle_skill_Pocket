@@ -1,0 +1,4 @@
+interface:
+  display_name: "多 Agent 指挥官"
+  short_description: "由主 Agent 拆分任务，协调调查、实施与独立验收并整合成果"
+  default_prompt: "使用 $agent-team 组织 3 个子 agent，按调查、实施、独立验收的分工完成我的任务。"
