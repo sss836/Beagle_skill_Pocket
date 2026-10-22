@@ -23,7 +23,7 @@ def main():
     source = Path(__file__).resolve().parent
     skills = source.parent / 'agent-skills'
     destination = args.home / '.local/share/skill-station'
-    app_files = ['app.py', 'launch.py', 'pet.py', 'pet_support.py', 'pet_tasks.py', 'task_runner.py', 'task_client.py', 'static', 'assets', 'vendor']
+    app_files = ['app.py', 'launch.py', 'pet.py', 'pet_support.py', 'pet_tasks.py', 'task_runner.py', 'task_client.py', 'skill_translation.py', 'static', 'assets', 'vendor']
     for name in app_files:
         if not (source/name).exists():
             raise SystemExit(f'缺少文件：{name}')

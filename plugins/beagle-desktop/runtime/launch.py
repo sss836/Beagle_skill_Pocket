@@ -31,6 +31,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--no-open", action="store_true")
     parser.add_argument("--task")
+    parser.add_argument('--skill')
+    parser.add_argument('--source')
+    parser.add_argument('--slug')
     args = parser.parse_args()
     run = runtime_dir()
     with (run / "launch.lock").open("w") as lock:
@@ -51,8 +54,11 @@ def main():
     print(url, flush=True)
     if args.no_open:
         return
-    if args.task:
-        url += '/?job='+urllib.parse.quote(args.task, safe='')
+    params = {}
+    if args.task: params['job'] = args.task
+    if args.skill: params['skill'] = args.skill
+    if args.source and args.slug: params.update(source=args.source,slug=args.slug)
+    if params: url += '/?'+urllib.parse.urlencode(params)
     browser = next((shutil.which(name) for name in ("google-chrome", "chromium", "chromium-browser") if shutil.which(name)), None)
     if browser:
         subprocess.Popen([browser, f"--app={url}", "--class=skill-station", "--window-size=1260,880"],

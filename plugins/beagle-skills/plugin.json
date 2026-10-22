@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "beagle-skills",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "技能导航与多 Agent 分工",
   "extensions": {
     "com.openai": {

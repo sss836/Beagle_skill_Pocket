@@ -430,8 +430,8 @@ class SkillPocket(Gtk.Window):
                 for candidate in self.results:
                     detail=f'{candidate["source"]} · {candidate["installs"]:,} 次安装'
                     self.row_button('🌱',candidate['name'],detail,
-                        lambda s=candidate:self.compose(task=evaluation_prompt(s,self.result_query)),
-                        '提交评估任务，交给 Codex 核查；先评估，不安装。')
+                        lambda s=candidate:self.owner.open_station(source=s['source'],slug=s['slug']),
+                        '自动打开中文说明，查看原文后再决定是否交给 Codex 评估。')
         self.rows.show_all()
 
     def copy(self,prompt):
@@ -634,10 +634,14 @@ class PetApplication(Gtk.Application):
         self.pocket.show_all()
         self.place_pocket()
 
-    def open_station(self,job_id=None):
+    def open_station(self,job_id=None,skill_id=None,source=None,slug=None):
         command=[sys.executable,str(BASE/'launch.py')]
         if job_id:
             command.extend(['--task',job_id])
+        if skill_id:
+            command.extend(['--skill',skill_id])
+        if source and slug:
+            command.extend(['--source',source,'--slug',slug])
         subprocess.Popen(command,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
 
     def check(self,condition,message):

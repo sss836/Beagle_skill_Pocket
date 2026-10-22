@@ -38,6 +38,10 @@ class TaskWindow(Gtk.Window):
         self.form = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         root.pack_start(self.form, False, False, 0)
         self.form.pack_start(label('使用：'+(skill['title'] if skill else '自动选择技能'), 'row-title'), False, False, 0)
+        if skill:
+            description = Gtk.Button(label='查看中文说明 ↗')
+            description.connect('clicked',lambda _button:owner.open_station(skill_id=skill['id']))
+            self.form.pack_start(description,False,False,0)
         self.workspace = Gtk.ComboBoxText()
         self.workspace.set_hexpand(True)
         self.form.pack_start(label('新对话所在的项目 / 工作文件夹', 'row-title'), False, False, 0)

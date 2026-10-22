@@ -147,7 +147,7 @@ class TaskManager:
                 return copy.deepcopy(self.model_cache[1])
             client = self.rpc_factory(lambda *_: None, lambda *_: None, str(self.workspaces[0] if self.workspaces else Path.home()))
             try:
-                client.call('initialize', {'clientInfo': {'name': 'beagle_skill_station', 'version': '0.3.3'}})
+                client.call('initialize', {'clientInfo': {'name': 'beagle_skill_station', 'version': '0.3.4'}})
                 client.send({'method': 'initialized', 'params': {}})
                 response = client.call('model/list', {'includeHidden': False, 'limit': 100}, timeout=20)
                 rows = response.get('data', [])
@@ -396,7 +396,7 @@ class TaskManager:
                     if job['status'] == 'cancelled':
                         continue
                 client.call('initialize', {'clientInfo': {'name': 'beagle_skill_station',
-                    'title': 'Beagle Skill Station', 'version': '0.3.3'}})
+                    'title': 'Beagle Skill Station', 'version': '0.3.4'}})
                 client.send({'method': 'initialized', 'params': {}})
                 account = client.call('account/read', {'refreshToken': False}, timeout=15)
                 if not account.get('account'):

@@ -162,11 +162,17 @@ def describe(name: str, raw: str, display: str, plugin: str):
         return "插件管理", "查找、连接或管理插件能力。", "工具与连接", "🔌"
     if name == "excel-live-control":
         return "操作当前 Excel", "通过已连接的 Excel 会话操作打开的工作簿。", "文档与办公", "🟩"
-    return display or name, raw[:160], "模板与其他", "🌱"
+    from skill_translation import needs_translation
+    summary = '打开中文说明，了解这个技能的用途和适用范围。' if needs_translation(raw) else raw[:160]
+    return display or name, summary, "模板与其他", "🌱"
 
 
 def catalog(home: Path | None = None, workspaces: list[Path] | None = None) -> list[dict]:
     home = home or Path.home()
+    try:
+        translated_labels=json.loads((home/'.local/share/skill-station/translations/labels.json').read_text())
+        if not isinstance(translated_labels,dict):translated_labels={}
+    except (OSError,ValueError):translated_labels={}
     records = {}
     for file, origin, enabled, plugin in skill_paths(home, workspaces or []):
         meta = read_yaml(file)
@@ -191,8 +197,16 @@ def catalog(home: Path | None = None, workspaces: list[Path] | None = None) -> l
             prompt = prompt.replace(f"${name}", f"${invocation}")
         if not prompt.startswith(("使用", "Use", "$")) or f"${invocation}" not in prompt:
             prompt = f"使用 ${invocation}，帮我完成以下任务："
+        skill_id=hashlib.sha256(resolved.encode()).hexdigest()[:16]
+        try: stamp=file.stat()
+        except OSError: continue
+        signature=f'{stamp.st_mtime_ns}:{stamp.st_size}'
+        localized=translated_labels.get(skill_id,{})
+        if isinstance(localized,dict) and localized.get('signature')==signature:
+            if isinstance(localized.get('title'),str):title=localized['title'][:100] or title
+            if isinstance(localized.get('summary'),str):summary=localized['summary'][:240] or summary
         records[resolved] = {
-            "id": hashlib.sha256(resolved.encode()).hexdigest()[:16], "name": name,
+            "id": skill_id, "name": name,"translation_signature":signature,
             "title": title, "summary": summary, "description": raw, "category": category,
             "icon": icon, "origin": origin, "plugin": plugin, "enabled": enabled,
             "invocable": invocable, "invocation": invocation, "path": resolved, "prompt": prompt,
@@ -275,6 +289,7 @@ class SkillServer(ThreadingHTTPServer):
         self.search_cache, self.cache_lock = {}, threading.Lock()
         self.csrf_token = secrets.token_urlsafe(32)
         self._tasks = None
+        self._translations = None
         super().__init__(address, Handler)
 
     @property
@@ -285,6 +300,15 @@ class SkillServer(ThreadingHTTPServer):
                 data = Path(self.home)/'.local/share/skill-station/tasks' if self.home else BASE/'tasks'
                 self._tasks = TaskManager(data, self.workspaces)
             return self._tasks
+
+    @property
+    def translations(self):
+        from skill_translation import SkillTranslations
+        with self.cache_lock:
+            if self._translations is None:
+                data = Path(self.home)/'.local/share/skill-station/translations' if self.home else BASE/'translations'
+                self._translations = SkillTranslations(data)
+            return self._translations
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -332,7 +356,15 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(data, dict):
                 raise ValueError('请求格式不正确')
             path = urllib.parse.urlsplit(self.path).path
-            if path == '/api/jobs':
+            if path == '/api/translate':
+                if data.get('id'):
+                    skill = next((s for s in catalog(self.server.home,self.server.workspaces) if s['id']==data['id']),None)
+                    if not skill: raise ValueError('该技能已变化，请刷新列表')
+                    result=self.server.translations.start(skill=skill,original=Path(skill['path']).read_text()[:160000],retry=data.get('retry') is True)
+                else:
+                    result=self.server.translations.start(source=data.get('source'),slug=data.get('slug'),retry=data.get('retry') is True)
+                self.json(result,202)
+            elif path == '/api/jobs':
                 skill = None
                 if data.get('skill_id'):
                     skill = next((s for s in catalog(self.server.home, self.server.workspaces) if s['id'] == data['skill_id']), None)
@@ -371,6 +403,11 @@ class Handler(BaseHTTPRequestHandler):
         params = urllib.parse.parse_qs(parsed.query)
         if parsed.path == "/api/health":
             self.json({"service": SERVICE})
+        elif parsed.path == '/api/translation':
+            try:
+                self.json(self.server.translations.get(params.get('id',[''])[0]))
+            except ValueError as error:
+                self.json({'error':str(error)},404)
         elif parsed.path == '/api/runner':
             self.json({**self.server.tasks.info(), 'token': self.server.csrf_token})
         elif parsed.path == '/api/jobs':

@@ -46,6 +46,20 @@ class CatalogTests(unittest.TestCase):
         path=self.skill('.codex/skills/demo',description='>\n  First line\n  second line')
         self.assertEqual(app.read_yaml(path)['description'].strip(),'First line second line')
 
+    def test_cached_chinese_labels_do_not_change_skill_id_or_invocation(self):
+        file=self.skill('.codex/skills/csv-reader','csv-reader','Read CSV files and explain the columns. Do not change the data.')
+        with patch.dict(app.os.environ,{},clear=True):before=app.catalog(self.home)[0]
+        index=self.home/'.local/share/skill-station/translations/labels.json'
+        index.parent.mkdir(parents=True)
+        index.write_text(json.dumps({before['id']:{'title':'CSV 阅读器','summary':'读取列信息，不修改原始数据。','signature':before['translation_signature']}}))
+        with patch.dict(app.os.environ,{},clear=True):after=app.catalog(self.home)[0]
+        self.assertEqual(after['title'],'CSV 阅读器')
+        self.assertEqual(after['invocation'],'csv-reader')
+        self.assertEqual(after['id'],before['id'])
+        file.write_text(file.read_text()+'\nNew source content.')
+        with patch.dict(app.os.environ,{},clear=True):changed=app.catalog(self.home)[0]
+        self.assertEqual(changed['title'],'csv-reader')
+
     def test_plugin_invocation_preserves_namespace_and_display_name(self):
         self.skill('.codex/plugins/cache/vendor/presentations/1.0/skills/presentations','Presentations')
         with patch.dict(app.os.environ,{},clear=True):
@@ -145,6 +159,31 @@ class HttpTests(unittest.TestCase):
             with urllib.request.urlopen(request) as response:
                 self.assertEqual(response.status,201)
             submit.assert_called_once()
+
+    def test_chinese_reading_requires_nonce_and_never_changes_skill_instructions(self):
+        from skill_translation import SkillTranslations
+        original='---\nname: translation-fixture\ndescription: Read CSV files and inspect columns without modifying any data.\n---\nRead CSV files and inspect the columns. Do not modify or upload the original data.\n'
+        path=Path(self.tmp.name)/'.codex/skills/translation-fixture/SKILL.md'
+        path.parent.mkdir(parents=True,exist_ok=True);path.write_text(original)
+        manager=SkillTranslations(Path(self.tmp.name)/'translation-cache',
+            lambda *_:{'title':'CSV 阅读器','summary':'读取并检查列，不修改或上传数据。','content':'读取 CSV 文件并检查列。不要修改或上传原始数据。'})
+        with patch.dict(app.os.environ,{'CODEX_HOME':str(Path(self.tmp.name)/'.codex')}),patch.object(self.server,'_translations',manager):
+            skill=next(row for row in app.catalog(Path(self.tmp.name)) if row['name']=='translation-fixture')
+            body=json.dumps({'id':skill['id']}).encode()
+            with self.assertRaises(urllib.error.HTTPError) as denied:
+                urllib.request.urlopen(urllib.request.Request(self.url+'/api/translate',data=body,headers={'Content-Type':'application/json'}))
+            self.assertEqual(denied.exception.code,403)
+            with urllib.request.urlopen(self.url+'/api/runner') as response:token=json.load(response)['token']
+            request=urllib.request.Request(self.url+'/api/translate',data=body,
+                headers={'Content-Type':'application/json','X-Beagle-Token':token,'Origin':self.url})
+            with urllib.request.urlopen(request) as response:
+                self.assertEqual(response.status,202);job=json.load(response)
+            manager.queue.join()
+            with urllib.request.urlopen(self.url+'/api/translation?id='+job['id']) as response:result=json.load(response)
+            self.assertEqual(result['status'],'completed')
+            self.assertEqual(result['original'],original)
+            self.assertIn('不要修改或上传',result['content'])
+            self.assertEqual(path.read_text(),original)
 
 
 if __name__=='__main__':

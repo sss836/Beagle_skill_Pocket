@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT/'desktop/skill-station'
 VERSION = (ROOT/'VERSION').read_text().strip()
-RUNTIME = ['app.py','launch.py','pet_support.py','task_runner.py','task_client.py','static','assets']
+RUNTIME = ['app.py','launch.py','pet_support.py','task_runner.py','task_client.py','skill_translation.py','static','assets']
 
 
 def copy(source, target):

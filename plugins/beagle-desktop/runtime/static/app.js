@@ -85,9 +85,9 @@ function onlineCard(skill) {
   const meta = el('div','online-meta'); meta.append(el('span','badge',`${new Intl.NumberFormat('zh-CN',{notation:'compact'}).format(skill.installs)} 次安装`));
   if (skill.known_publisher) meta.append(el('span','badge','已知发布方'));
   meta.append(el('span','badge connection','待核验适用性')); card.append(meta,el('p','card-summary',`匹配检索词：${skill.matched.join('、')}`));
-  const bottom = el('div','card-bottom'); const link = el('a','','查看来源 ↗'); link.href = skill.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+  const bottom = el('div','card-bottom');
   const prompt = `使用 $skill-hub 和可用的 find-skills，评估这个候选技能是否适合我的需求。\n需求：${state.onlineQuery}\n候选：${skill.source}@${skill.slug}\n来源：${skill.url}\n请读取真实 SKILL.md，核查来源仓库、维护状态、安装量、所需工具与权限，给出适用性和替代选项。先评估，不安装。`;
-  bottom.append(link,button('复制评估指令 ↗','card-action',()=>copy(prompt)));card.append(bottom);return card;
+  bottom.append(button('中文说明 ↗','card-action',()=>openOnlineDetail(skill)),button('复制评估指令','card-action',()=>copy(prompt)));card.append(bottom);return card;
 }
 function render() {
   $('navCount').textContent = String(state.skills.length); $('favCount').textContent = String(state.skills.filter(s=>state.favorites.has(s.id)).length); renderCategories(); $('grid').replaceChildren();
@@ -114,11 +114,69 @@ async function openDetail(skill) {
   $('task').value = query(); $('detailContent').textContent = '正在读取…'; $('detailPath').textContent = skill.path; $('detailCopy').disabled = !skill.enabled || !skill.invocable; $('detailCopy').textContent = !skill.enabled ? '此技能当前已停用' : !skill.invocable ? '此技能声明禁止模型调用' : '复制完整调用指令';
   $('detail').showModal();
   $('detailRun').disabled = !skill.enabled || !skill.invocable;
+  readChinese({id:skill.id},'detail',data=>{
+    if(data.status==='completed'){
+      $('detailTitle').textContent=data.title||skill.title;$('detailSummary').textContent=data.summary||skill.summary;
+      skill.title=data.title||skill.title;skill.summary=data.summary||skill.summary;
+      const record=state.skills.find(item=>item.id===skill.id);if(record){record.title=skill.title;record.summary=skill.summary;}
+      render();
+    }
+  });
   try { const response = await fetch('/api/skill?id='+encodeURIComponent(skill.id)); const data = await response.json(); if (state.detail?.id === skill.id) $('detailContent').textContent = data.content || data.error; } catch (_) { $('detailContent').textContent = '读取失败，请刷新后再试。'; }
 }
+
+let chineseReadEpoch=0;
+function compactReading(text){
+  return text.split(/(```[\s\S]*?```)/g)
+    .map((part,index)=>index%2?part:part.replace(/\n[ \t]*\n(?:[ \t]*\n)+/g,'\n\n'))
+    .join('');
+}
+async function readChinese(request,prefix,onUpdate,retry=false){
+  const epoch=++chineseReadEpoch,dialog=$(prefix==='detail'?'detail':'onlineDetail');
+  const status=$(prefix+'ChineseStatus'),content=$(prefix+'Chinese'),again=$(prefix+'ChineseRetry');
+  content.textContent='';status.textContent='正在读取说明，自动生成中文…';again.hidden=true;
+  again.onclick=()=>readChinese(request,prefix,onUpdate,true);
+  const current=()=>epoch===chineseReadEpoch&&dialog.open;
+  try{
+    const info=await fetch('/api/runner').then(response=>response.json());
+    if(!current())return;
+    const response=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json','X-Beagle-Token':info.token},body:JSON.stringify({...request,retry})});
+    let data=await response.json();if(!response.ok)throw Error(data.error||'中文说明暂未生成');
+    for(let count=0;count<200&&current();count++){
+      if(data.original)$(prefix==='detail'?'detailContent':'onlineOriginal').textContent=data.original;
+      onUpdate?.(data);
+      if(data.status==='completed'){
+        content.textContent=compactReading(data.content);
+        status.textContent=data.truncated?'说明较长，当前为中文节选；下方可查看来源原文。':data.translated?'中文译文 · 已缓存，原文保持不变':'原说明已是中文';
+        return;
+      }
+      if(data.status==='error')throw Error(data.error);
+      status.textContent=data.status==='loading'?'正在读取来源说明…':'正在通过已登录的 Codex 翻译为中文，首次打开需要一点时间…';
+      await new Promise(resolve=>setTimeout(resolve,1000));if(!current())return;
+      const poll=await fetch('/api/translation?id='+encodeURIComponent(data.id));data=await poll.json();if(!poll.ok)throw Error(data.error);
+    }
+    if(current())throw Error('翻译暂未完成，可以稍后重试。');
+  }catch(error){if(current()){status.textContent=error.message||'中文翻译暂未完成';content.textContent='可以展开下方原文查看，或点击重试。';again.hidden=false;}}
+}
+function openOnlineDetail(skill){
+  $('onlineTitle').textContent=skill.name;$('onlineSummary').textContent='正在读取来源页，中文说明会自动显示。';
+  $('onlineName').textContent=skill.source+'@'+skill.slug;$('onlineOriginal').textContent='正在读取…';
+  $('onlineSource').href=skill.url;
+  const prompt=`使用 $skill-hub 和 find-skills，评估这个候选技能。需求：${state.onlineQuery}\n候选：${skill.source}@${skill.slug}\n来源：${skill.url}\n请核查真实 SKILL.md、来源和适用范围。先评估，不安装。`;
+  $('onlineEvaluate').onclick=()=>{$('onlineDetail').close();TaskUI.start(null,prompt);};
+  $('onlineDetail').showModal();
+  readChinese({source:skill.source,slug:skill.slug},'online',data=>{
+    if(data.status==='completed'){$('onlineTitle').textContent=data.title||skill.name;$('onlineSummary').textContent=data.summary||'来源页的中文阅读说明。';}
+  });
+}
+$('onlineClose').addEventListener('click',()=>$('onlineDetail').close());
+for(const id of ['detail','onlineDetail'])$(id).addEventListener('close',()=>{chineseReadEpoch++;});
 async function load() {
   $('refresh').disabled = true;
-  try { const response = await fetch('/api/skills'); if (!response.ok) throw Error(); const data = await response.json(); state.skills = data.skills; state.categories = data.categories; $('notice').hidden = true; render(); }
+  try { const response = await fetch('/api/skills'); if (!response.ok) throw Error(); const data = await response.json(); state.skills = data.skills; state.categories = data.categories; $('notice').hidden = true; render();
+    if(!load.opened){load.opened=true;const params=new URLSearchParams(location.search);const skill=state.skills.find(row=>row.id===params.get('skill'));if(skill)openDetail(skill);
+      if(params.get('source')&&params.get('slug'))openOnlineDetail({source:params.get('source'),slug:params.get('slug'),name:params.get('slug'),url:'https://skills.sh/'+params.get('source')+'/'+params.get('slug')});}
+  }
   catch (_) { $('notice').textContent = '本地服务暂时无法读取。请重新点击桌面图标打开。'; $('notice').hidden = false; }
   finally { $('refresh').disabled = false; }
 }

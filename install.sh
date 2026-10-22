@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # User-level installer. No sudo, credential copying, or API key is required here.
 set -euo pipefail
-BEAGLE_VERSION=0.3.3
+BEAGLE_VERSION=0.3.4
 BEAGLE_REPO=sss836/Beagle_skill_Pocket
 beagle_mode=all
 beagle_start=1

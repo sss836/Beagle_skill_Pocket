@@ -1,4 +1,4 @@
-# 比格技能口袋 0.3.3：安装与分享
+# 比格技能口袋 0.3.4：安装与分享
 
 本版本包含两个独立插件和一个 Linux 桌面小工具。自己的账号、连接和工作文件夹由每位使用者自行配置。分享包不包含登录凭据、个人任务记录或本机已安装的第三方技能。
 
@@ -6,9 +6,9 @@
 
 | 文件 | 内容 | 使用范围 |
 | --- | --- | --- |
-| `beagle-skills-0.3.3.zip` | 技能导航 `skill-hub`、多 Agent 分工 `agent-team` | 插件技能；能否执行具体工具取决于宿主实际能力 |
-| `beagle-desktop-0.3.3.zip` | 本机任务 MCP、`beagle-tasks` 技能、连接服务 | 需要本机执行环境和已经登录的 Codex；已在本机 Linux 验证 |
-| `beagle-linux-desktop-0.3.3.zip` | 比格桌宠、悬浮弹窗、完整网页和连接层 | 已验证的 Linux 桌面版本；不是 Windows EXE 或 Mac DMG |
+| `beagle-skills-0.3.4.zip` | 技能导航 `skill-hub`、多 Agent 分工 `agent-team` | 插件技能；能否执行具体工具取决于宿主实际能力 |
+| `beagle-desktop-0.3.4.zip` | 本机任务 MCP、`beagle-tasks` 技能、连接服务 | 需要本机执行环境和已经登录的 Codex；已在本机 Linux 验证 |
+| `beagle-linux-desktop-0.3.4.zip` | 比格桌宠、悬浮弹窗、完整网页和连接层 | 已验证的 Linux 桌面版本；不是 Windows EXE 或 Mac DMG |
 
 仓库插件源包括 `.agents/plugins/marketplace.json`、`plugins/beagle-skills/` 和 `plugins/beagle-desktop/`。直接分享 GitHub 仓库链接即可按下面的方式安装。单独的插件 ZIP 用于插件导入或官方提交，不是聊天分享链接。
 
@@ -19,7 +19,7 @@
 在包含本地插件源目录的位置执行：
 
 ```bash
-codex plugin marketplace add sss836/Beagle_skill_Pocket --ref v0.3.3
+codex plugin marketplace add sss836/Beagle_skill_Pocket --ref v0.3.4
 codex plugin add beagle-skills@beagle-local
 codex plugin add beagle-desktop@beagle-local
 ```
@@ -46,7 +46,7 @@ codex plugin add beagle-desktop@beagle-local
 
 ## 安装 Linux 比格桌宠
 
-解压 `beagle-linux-desktop-0.3.3.zip`。在 Ubuntu 的已验证环境中，需要 Python 3.12、GTK 3、PyGObject 和 Cairo。系统依赖可由使用者从系统包管理器安装，例如：
+解压 `beagle-linux-desktop-0.3.4.zip`。在 Ubuntu 的已验证环境中，需要 Python 3.12、GTK 3、PyGObject 和 Cairo。系统依赖可由使用者从系统包管理器安装，例如：
 
 ```bash
 sudo apt install python3-gi python3-cairo python3-gi-cairo gir1.2-gtk-3.0
